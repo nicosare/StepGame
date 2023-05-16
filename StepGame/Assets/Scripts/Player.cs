@@ -3,19 +3,26 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEditor.Search;
 using UnityEngine;
+using static GameManager;
 
-public class PlayerMove : MonoBehaviour
+public class Player : MonoBehaviour
 {
+    [SerializeField]
+    private string name;
     private float speed = 5f;
-    private Animator animator;
+    public int CurrentPosition;
+    public bool IsEndMove;
+
+    public string Name { get => name; set => name = value; }
 
     private void Start()
     {
-        animator = GetComponent<Animator>();
+        IsEndMove = true;
     }
 
-    private IEnumerator MovePlayer(List<Vector3Int> path)
+    private IEnumerator Move(List<Vector3Int> path)
     {
+        IsEndMove = false;
         for (int i = 0; i < path.Count; i++)
         {
             var targetPosition = path[i];
@@ -25,8 +32,9 @@ public class PlayerMove : MonoBehaviour
                 transform.position = Vector3.MoveTowards(transform.position, targetPosition, Time.deltaTime * speed);
                 yield return null;
             }
-
             yield return new WaitForSeconds(.1f);
+            if (i == path.Count - 1 && transform.position == targetPosition)
+                IsEndMove = true;
         }
     }
 
@@ -43,6 +51,9 @@ public class PlayerMove : MonoBehaviour
             newPath = path.GetRange(targetIndex, currentIndex - targetIndex + 1);
             newPath.Reverse();
         }
-        StartCoroutine(MovePlayer(newPath));
+        StartCoroutine(Move(newPath));
+
+        CurrentPosition = Mathf.Clamp(CurrentPosition + stepCount, 0, path.Count - 1);
+        Debug.Log(CurrentPosition);
     }
 }

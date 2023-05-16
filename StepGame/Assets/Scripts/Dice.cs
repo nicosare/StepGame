@@ -8,9 +8,8 @@ public class Dice : MonoBehaviour
     public static MovePlayerEvent movePlayerEvent;
 
     private Rigidbody rb;
-    private bool isThrowing;
+    public bool isThrowing;
     public int CurrentNumber;
-
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
