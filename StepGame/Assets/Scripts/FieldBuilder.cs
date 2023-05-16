@@ -1,11 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection.Emit;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using static GameManager;
 
 public class FieldBuilder : MonoBehaviour
 {
+    public static SetPlayerEvent setPlayerEvent;
+
     [SerializeField]
     private GameObject cell;
     [SerializeField]
@@ -13,37 +17,33 @@ public class FieldBuilder : MonoBehaviour
     [SerializeField]
     private int fieldWidth, fieldHeight;
 
-    private bool[,] field; // Используем булевый массив для отслеживания посещенных клеток
-    private List<Vector3Int> path; // Список всех позиций дороги
+    private bool[,] field;
+    public List<Vector3Int> Path;
+    public bool IsBuilded;
 
     private void Awake()
     {
         field = new bool[fieldWidth, fieldHeight];
-        path = new List<Vector3Int>();
+        Path = new List<Vector3Int>();
     }
 
-    private void Start()
-    {
-        GeneratePath();
-    }
-
-    private void GeneratePath()
+    public void GeneratePath()
     {
         var startPosition = GetRandomStartPosition();
 
-        path.Add(startPosition);
+        Path.Add(startPosition);
         field[startPosition.x, startPosition.z] = true;
 
         for (int i = 0; i < fieldWidth * fieldHeight - 1; i++)
         {
-            Vector3Int nextPosition = GetRandomNextPosition(path[i]);
-            if (nextPosition == Vector3Int.zero) // Если не удалось найти позицию, заканчиваем генерацию
+            Vector3Int nextPosition = GetRandomNextPosition(Path[i]);
+            if (nextPosition == Vector3Int.zero)
                 break;
-            path.Add(nextPosition);
+            Path.Add(nextPosition);
             field[nextPosition.x, nextPosition.z] = true;
         }
 
-        if (path.Count < MinimalPathLength)
+        if (Path.Count < MinimalPathLength)
         {
             ClearField();
             GeneratePath();
@@ -54,7 +54,7 @@ public class FieldBuilder : MonoBehaviour
 
     private void ClearField()
     {
-        path.Clear();
+        Path.Clear();
         field = new bool[fieldWidth, fieldHeight];
     }
 
@@ -66,21 +66,17 @@ public class FieldBuilder : MonoBehaviour
     private Vector3Int GetRandomNextPosition(Vector3Int currentPosition)
     {
         var directions = new List<Vector3Int>() { Vector3Int.left, Vector3Int.right, Vector3Int.forward, Vector3Int.back };
-        directions.Shuffle(); // Перемешиваем список направлений
+        directions.Shuffle();
 
         foreach (var direction in directions)
         {
             var nextPosition = currentPosition + direction;
 
-            if (InBounds(nextPosition)
-                && !field[nextPosition.x, nextPosition.z])
-            //&& !IntersectsWithSelf(nextPosition))
-            {
+            if (InBounds(nextPosition) && !field[nextPosition.x, nextPosition.z])
                 return nextPosition;
-            }
         }
 
-        return Vector3Int.zero; // Не удалось найти подходящую позицию
+        return Vector3Int.zero;
     }
 
     private bool InBounds(Vector3Int nextPosition)
@@ -91,29 +87,27 @@ public class FieldBuilder : MonoBehaviour
             && nextPosition.z < fieldHeight;
     }
 
-    private bool IntersectsWithSelf(Vector3Int nextPosition)
-    {
-        // Проверяем, совпадает ли найденная позиция с любой из предыдущих позиций
-        for (int i = 0; i < path.Count - 1; i++)
-        {
-            if (nextPosition == path[i])
-            {
-                return true;
-            }
-        }
-        return false;
-    }
 
     private IEnumerator SpawnCells()
     {
         var i = 0;
-        foreach (var position in path)
+        foreach (var position in Path)
         {
             var newCell = Instantiate(cell);
             newCell.transform.position = new Vector3Int(position.x, 0, position.z);
             newCell.transform.GetChild(0).GetChild(0).GetChild(0).GetComponent<TextMeshProUGUI>().text = i.ToString();
             i++;
             yield return new WaitForSeconds(0.05f);
+        }
+        yield return new WaitForSeconds(0.5f);
+        SpawnDecor();
+    }
+
+    private void SpawnDecor()
+    {
+        if (setPlayerEvent != null)
+        {
+            setPlayerEvent();
         }
     }
 }
