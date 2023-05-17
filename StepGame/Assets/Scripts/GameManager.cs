@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using System.Reflection.Emit;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -18,7 +20,7 @@ public class GameManager : MonoBehaviour
     private Player currentPlayer;
 
     private Queue<Player> playersQueue;
-    private bool canThrowDice;
+    private bool playersReady;
 
     private void Awake()
     {
@@ -36,32 +38,44 @@ public class GameManager : MonoBehaviour
     {
         players.Shuffle();
         playersQueue = new Queue<Player>();
-        foreach (var player in players)
+        for (int i = 0; i < players.Count; i++)
         {
-            var newPlayer = Instantiate(player);
-            newPlayer.transform.position = fieldBuilder.Path[0];
+            var newPlayer = Instantiate(players[i]);
+            newPlayer.transform.position = fieldBuilder.CellsPositions[0];
+            newPlayer.Path = fieldBuilder.Path;
             playersQueue.Enqueue(newPlayer);
         }
         currentPlayer = playersQueue.Dequeue();
-        canThrowDice = true;
+        playersReady = true;
     }
 
     private void Update()
     {
-        if (!dice.isActiveAndEnabled
-            && canThrowDice
-            && playersQueue.All(player => player.IsEndMove))
+        if (CanMakeTurn())
         {
-            if (currentPlayer.CurrentPosition != fieldBuilder.Path.Count - 1)
-            {
-                if (currentPlayer.Name == "Computer")
-                    ThrowDice();
-                else if (Input.GetKeyDown(KeyCode.Space))
-                    ThrowDice();
-            }
+            if (!currentPlayer.IsFinish)
+                MakeTurn();
             else
-                SkipTurn();
+                SwithToNextPlayer();
+            if (Input.GetKeyDown(KeyCode.A))
+                SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+
         }
+    }
+
+    private bool CanMakeTurn()
+    {
+        return !dice.isActiveAndEnabled
+             && playersReady
+             && playersQueue.All(player => player.IsEndMove);
+    }
+
+    private void MakeTurn()
+    {
+        if (currentPlayer.Name == "Computer")
+            ThrowDice();
+        else if (Input.GetKeyDown(KeyCode.Space))
+            ThrowDice();
     }
 
     private void PlayerTurn()
@@ -70,25 +84,15 @@ public class GameManager : MonoBehaviour
             ThrowDice();
         else
         {
-            currentPlayer.MakeStep(dice.CurrentNumber, fieldBuilder.Path);
+            currentPlayer.MakeStep(dice.CurrentNumber);
             if (playersQueue.Count > 0)
             {
-                playersQueue.Enqueue(currentPlayer);
-                currentPlayer = playersQueue.Dequeue();
+                SwithToNextPlayer();
             }
         }
     }
 
-    private void FitPlayers()
-    {
-        Debug.Log(playersQueue.Any(player => player.CurrentPosition == currentPlayer.CurrentPosition));
-        if (playersQueue.Any(player => player.CurrentPosition == currentPlayer.CurrentPosition))
-            currentPlayer.transform.GetChild(0).position += Vector3.up * 0.3f;
-        else
-            currentPlayer.transform.GetChild(0).position = new Vector3(currentPlayer.transform.position.x, 0.1f, currentPlayer.transform.position.z);
-    }
-
-    private void SkipTurn()
+    private void SwithToNextPlayer()
     {
         playersQueue.Enqueue(currentPlayer);
         currentPlayer = playersQueue.Dequeue();
@@ -96,7 +100,6 @@ public class GameManager : MonoBehaviour
 
     private void ThrowDice()
     {
-        Debug.Log("Throw");
         dice.gameObject.SetActive(true);
         dice.Throw();
     }

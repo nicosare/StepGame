@@ -32,9 +32,7 @@ public class Dice : MonoBehaviour
             CurrentNumber = GetNumber();
 
             if (movePlayerEvent != null)
-            {
                 movePlayerEvent();
-            }
 
             gameObject.SetActive(false);
         }
@@ -44,32 +42,26 @@ public class Dice : MonoBehaviour
     {
         if (Vector3.Dot(transform.up, Vector3.up) > 0.9f)
         {
-            Debug.Log("one");
             return 1;
         }
         else if (Vector3.Dot(-transform.right, Vector3.up) > 0.9f)
         {
-            Debug.Log("two");
             return 2;
         }
         else if (Vector3.Dot(transform.forward, Vector3.up) > 0.9f)
         {
-            Debug.Log("three");
             return 3;
         }
         else if (Vector3.Dot(-transform.forward, Vector3.up) > 0.9f)
         {
-            Debug.Log("four");
             return 4;
         }
         else if (Vector3.Dot(transform.right, Vector3.up) > 0.9f)
         {
-            Debug.Log("five");
             return 5;
         }
         else if (Vector3.Dot(-transform.up, Vector3.up) > 0.9f)
         {
-            Debug.Log("six");
             return 6;
         }
         else

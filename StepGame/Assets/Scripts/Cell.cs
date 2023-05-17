@@ -1,18 +1,28 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
-public class Cell : MonoBehaviour
+public abstract class Cell : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
+    protected abstract void CellAction();
+    public List<Player> playersInCell;
+    public TextMeshProUGUI Number;
+    public Image Image;
+
+    public delegate void FitPlayersEvent();
+
+    private void Start()
     {
-        
+        Player.fitPlayersEvent += FitPlayers;
     }
 
-    // Update is called once per frame
-    void Update()
+    private void FitPlayers()
     {
-        
+        for (int i = 0; i < playersInCell.Count; i++)
+        {
+            playersInCell[i].transform.position = new Vector3(playersInCell[i].transform.position.x, 0.2f * i, playersInCell[i].transform.position.z);
+        }
     }
 }
