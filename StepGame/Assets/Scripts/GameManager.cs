@@ -1,30 +1,28 @@
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using System.Linq;
-using System.Reflection.Emit;
-using UnityEngine.SceneManagement;
+using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
     public delegate void SetPlayerEvent();
     public delegate void MovePlayerEvent();
+    public delegate void SecondTurnEvent();
 
     [SerializeField]
     private FieldBuilder fieldBuilder;
     [SerializeField]
     private Dice dice;
     [SerializeField]
-    private List<Player> players;
-    [SerializeField]
     private Player currentPlayer;
 
-    private Queue<Player> playersQueue;
+    public Queue<Player> playersQueue;
     private bool playersReady;
-
+    private List<Player> players;
     private void Awake()
     {
-        dice.gameObject.SetActive(false);
+        dice.gameObject.SetActive(false); 
+        players = DataManager.Instance.players;
+
     }
 
     private void Start()
@@ -32,11 +30,12 @@ public class GameManager : MonoBehaviour
         fieldBuilder.GeneratePath();
         FieldBuilder.setPlayerEvent += SetPlayers;
         Dice.movePlayerEvent += PlayerTurn;
+        Player.secondTurnEvent += SecondTurn;
     }
 
     private void SetPlayers()
     {
-        players.Shuffle();
+        
         playersQueue = new Queue<Player>();
         for (int i = 0; i < players.Count; i++)
         {
@@ -53,13 +52,15 @@ public class GameManager : MonoBehaviour
     {
         if (CanMakeTurn())
         {
-            if (!currentPlayer.IsFinish)
+            if (!currentPlayer.IsFinish && !currentPlayer.IsSkipped)
+            {
                 MakeTurn();
+            }
             else
+            {
+                currentPlayer.IsSkipped = false;
                 SwithToNextPlayer();
-            if (Input.GetKeyDown(KeyCode.A))
-                SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-
+            }
         }
     }
 
@@ -72,7 +73,7 @@ public class GameManager : MonoBehaviour
 
     private void MakeTurn()
     {
-        if (currentPlayer.Name == "Computer")
+        if (currentPlayer.IsComputer)
             ThrowDice();
         else if (Input.GetKeyDown(KeyCode.Space))
             ThrowDice();
@@ -85,10 +86,20 @@ public class GameManager : MonoBehaviour
         else
         {
             currentPlayer.MakeStep(dice.CurrentNumber);
+
             if (playersQueue.Count > 0)
             {
                 SwithToNextPlayer();
             }
+        }
+    }
+
+    private void SecondTurn()
+    {
+        for (int i = 0; i < playersQueue.Count; i++)
+        {
+            Debug.Log("Switch");
+            SwithToNextPlayer();
         }
     }
 

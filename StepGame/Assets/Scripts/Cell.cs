@@ -1,21 +1,22 @@
-using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
+using static Player;
 
 public abstract class Cell : MonoBehaviour
 {
     protected abstract void CellAction();
+    public int CountCellsInGame;
     public List<Player> playersInCell;
     public TextMeshProUGUI Number;
-    public Image Image;
 
     public delegate void FitPlayersEvent();
+    public delegate void CellActionEvent();
 
-    private void Start()
+    private void Awake()
     {
-        Player.fitPlayersEvent += FitPlayers;
+        fitPlayersEvent += FitPlayers;
+        cellActionEvent += CellAction;
     }
 
     private void FitPlayers()

@@ -1,10 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection.Emit;
-using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using static GameManager;
 
 public class FieldBuilder : MonoBehaviour
@@ -12,7 +9,7 @@ public class FieldBuilder : MonoBehaviour
     public static SetPlayerEvent setPlayerEvent;
 
     [SerializeField]
-    private Cell cell;
+    private List<Cell> cells;
     [SerializeField]
     private Decor decor;
     [SerializeField]
@@ -23,6 +20,7 @@ public class FieldBuilder : MonoBehaviour
     private int fieldWidth, fieldHeight;
 
     private bool[,] field;
+    private List<Cell> preparedCells;
     public List<Vector3Int> CellsPositions;
     public Dictionary<Vector3Int, Cell> Path;
     public bool IsBuilded;
@@ -31,7 +29,29 @@ public class FieldBuilder : MonoBehaviour
     {
         field = new bool[fieldWidth, fieldHeight];
         CellsPositions = new List<Vector3Int>();
+        preparedCells = new List<Cell>();
         Path = new Dictionary<Vector3Int, Cell>();
+        cells.Sort((c1, c2) => c1.CountCellsInGame.CompareTo(c2.CountCellsInGame));
+        cells.Reverse();
+    }
+
+    private void PrepareCells()
+    {
+        for (int i = 0; i < cells.Count && preparedCells.Count < CellsPositions.Count; i++)
+        {
+            for (int j = 0; j < cells[i].CountCellsInGame; j++)
+            {
+                preparedCells.Add(cells[i]);
+            }
+        }
+
+        while (preparedCells.Count < CellsPositions.Count)
+        {
+            preparedCells.Add(cells.Last());
+        }
+
+        preparedCells.Shuffle();
+        StartCoroutine(SpawnCells());
     }
 
     public void GeneratePath()
@@ -56,7 +76,7 @@ public class FieldBuilder : MonoBehaviour
             GeneratePath();
         }
         else
-            StartCoroutine(SpawnCells());
+            PrepareCells();
     }
 
     private void ClearField()
@@ -110,18 +130,19 @@ public class FieldBuilder : MonoBehaviour
 
     private IEnumerator SpawnCells()
     {
-        foreach (var position in CellsPositions)
+        for (int i = 0; i < CellsPositions.Count; i++)
         {
-            var newCell = Instantiate(cell);
-            newCell.transform.position = position;
-            newCell.Number.text = CellsPositions.IndexOf(position).ToString();
+            var newCell = i != 0 && i != CellsPositions.Count - 1 ? Instantiate(preparedCells[i]) : Instantiate(cells.Last());
+            newCell.transform.position = CellsPositions[i];
             newCell.transform.SetParent(transform);
-            Path.Add(position, newCell);
+            Path.Add(CellsPositions[i], newCell);
+            newCell.Number.text = CellsPositions.IndexOf(CellsPositions[i]).ToString();
             yield return new WaitForSeconds(0.05f);
         }
         yield return new WaitForSeconds(0.5f);
         StartCoroutine(SpawnDecor());
     }
+
     private IEnumerator SpawnDecor()
     {
         for (int x = 0; x < fieldWidth; x++)
@@ -132,7 +153,7 @@ public class FieldBuilder : MonoBehaviour
                 {
                     var newDecor = Instantiate(decor);
                     newDecor.transform.position = new Vector3(x, 0, z);
-                    yield return new WaitForSeconds(0.005f);
+                    yield return new WaitForSeconds(0.01f);
                 }
             }
         }

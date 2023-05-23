@@ -144,10 +144,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: afaf4f6005cc293439c54a6ff41d7e7b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  name: Computer
+  PlayerName: 
   CurrentPosition: 0
   IsEndMove: 0
   IsFinish: 0
+  IsSkipped: 0
+  IsComputer: 0
+  MainColor: {r: 0.19215687, g: 0.1764706, b: 0.18039216, a: 1}
 --- !u!95 &7355748726491680027
 Animator:
   serializedVersion: 4

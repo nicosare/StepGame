@@ -1,27 +1,31 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using TMPro;
-using UnityEditor.Search;
 using UnityEngine;
 using static Cell;
+using static GameManager;
 
 public class Player : MonoBehaviour
 {
-    [SerializeField]
-    private string name;
+    public string PlayerName;
     private float speed = 5f;
     public int CurrentPosition;
     public bool IsEndMove;
     public bool IsFinish;
+    public bool IsSkipped;
+    public bool IsComputer;
+    public Color MainColor;
+    private MeshRenderer meshRenderer;
     public Dictionary<Vector3Int, Cell> Path;
-    public string Name { get => name; set => name = value; }
     public static FitPlayersEvent fitPlayersEvent;
+    public static CellActionEvent cellActionEvent;
+    public static SecondTurnEvent secondTurnEvent;
 
     private void Start()
     {
+        meshRenderer = transform.GetChild(0).GetComponent<MeshRenderer>();
+        meshRenderer.material.color = MainColor;
         IsEndMove = true;
         Path.First().Value.playersInCell.Add(this);
         FitPlayers();
@@ -29,7 +33,6 @@ public class Player : MonoBehaviour
 
     private IEnumerator Move(List<Vector3Int> path)
     {
-        IsEndMove = false;
         for (int i = 0; i < path.Count; i++)
         {
             var targetPosition = path[i];
@@ -43,19 +46,16 @@ public class Player : MonoBehaviour
             if (i == path.Count - 1 && transform.position == targetPosition)
             {
                 Path[targetPosition].playersInCell.Add(this);
-                EndMove();
+                ApplyCellAction();
+                FitPlayers();
             }
         }
     }
 
-    private void EndMove()
-    {
-        FitPlayers();
-        IsEndMove = true;
-    }
-
     public void MakeStep(int stepCount)
     {
+        IsEndMove = false;
+
         var currentPosition = Vector3Int.RoundToInt(new Vector3(transform.position.x, 0, transform.position.z));
         transform.position = currentPosition;
         Path[currentPosition].playersInCell.Remove(this);
@@ -83,9 +83,22 @@ public class Player : MonoBehaviour
         return newPath;
     }
 
+    public void TurnAgain()
+    {
+        if (secondTurnEvent != null)
+            secondTurnEvent();
+        IsEndMove = true;
+    }
+
     private static void FitPlayers()
     {
         if (fitPlayersEvent != null)
             fitPlayersEvent();
+    }
+
+    private void ApplyCellAction()
+    {
+        if (cellActionEvent != null)
+            cellActionEvent();
     }
 }

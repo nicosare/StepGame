@@ -1,11 +1,12 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+using System.Linq;
 
 public class BasicCell : Cell
 {
     protected override void CellAction()
     {
-        throw new System.NotImplementedException();
+        if (playersInCell.Count > 0)
+        {
+            playersInCell.Last().IsEndMove = true;
+        }
     }
 }
