@@ -27,8 +27,12 @@ public class Player : MonoBehaviour
     public Dictionary<Vector3Int, Cell> Path;
 
     public static CellActionEvent cellActionEvent;
-    public static SecondTurnEvent secondTurnEvent;
-    
+    private GameManager gameManager;
+    private void Awake()
+    {
+        gameManager = FindObjectOfType<GameManager>();
+    }
+
     private void Start()
     {
         audioSource = GetComponent<AudioSource>();
@@ -93,8 +97,7 @@ public class Player : MonoBehaviour
 
     public void TurnAgain()
     {
-        if (secondTurnEvent != null)
-            secondTurnEvent();
+        gameManager.SecondTurn();
         IsEndMove = true;
     }
 

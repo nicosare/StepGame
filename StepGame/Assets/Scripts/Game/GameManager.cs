@@ -6,8 +6,6 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
-    public delegate void SecondTurnEvent();
-
     [SerializeField]
     private FieldBuilder fieldBuilder;
     [SerializeField]
@@ -40,7 +38,6 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         fieldBuilder.GeneratePath();
-        Player.secondTurnEvent += SecondTurn;
 
     }
 
@@ -62,7 +59,7 @@ public class GameManager : MonoBehaviour
         StartCoroutine(checkTimeoutCoroutine);
     }
 
-    private void FitPlayers()
+    public void FitPlayers()
     {
         var groupedPlayers = allPlayers.GroupBy(player => player.CurrentPosition);
         foreach (var group in groupedPlayers)
@@ -112,6 +109,7 @@ public class GameManager : MonoBehaviour
     private void MakeTurn()
     {
         FitPlayers();
+
         if (currentPlayer.IsComputer)
             ThrowDice();
         else if (Input.GetKeyDown(KeyCode.Space))
@@ -138,7 +136,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private void SecondTurn()
+    public void SecondTurn()
     {
         for (int i = 0; i < players.Count; i++)
             SwithToNextPlayer();
@@ -146,9 +144,9 @@ public class GameManager : MonoBehaviour
 
     private void SwithToNextPlayer()
     {
+        FitPlayers();
         players.Enqueue(currentPlayer);
         currentPlayer = players.Dequeue();
-        FitPlayers();
     }
 
     private void ThrowDice()
